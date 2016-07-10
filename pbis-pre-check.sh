@@ -35,6 +35,7 @@ DEFAULT_DO_ENV=1
 DEFAULT_DO_SERVICES=
 DEFAULT_DO_CONFIG=1
 DEFAULT_DO_ALTFILES=1
+DEFAULT_DO_PBUL=1
 ALTFILES="/srv/file/ksetdblogin.dat /prod/file/is/ksetdblogin.dat"
 ALTFILES_PASSFIELD=3
 ALTFILES_FIELDSEP=":"
@@ -57,6 +58,7 @@ DO_ENV=$DEFAULT_DO_ENV
 DO_SERVICES=$DEFAULT_DO_SERVICES
 DO_CONFIG=$DEFAULT_DO_CONFIG
 DO_ALTFILES=$DEFAULT_DO_ALTFILES
+DO_PBUL=$DEFAULT_DO_PBUL
 
 if [ -d /tmp ] ; then
     OUTFILE_DIR="/tmp"
@@ -133,6 +135,7 @@ usage()
     $ECHO "    --services    - Do /etc/services output (default is `get_on_off $DEFAULT_DO_SERVICES`)"
     $ECHO "    --config      - Do /opt/{likewise|pbis}/{lw-config|config} --dump (default is `get_on_off $DEFAULT_DO_CONFIG`)"
     $ECHO "    --altfiles    - Gather additional files from pre-defined array (default is `get_on_off $DEFAULT_DO_ALTFILES`)"
+    $ECHO "    --pbul        - Gather PBUL files from no-prefix directory /etc/pb* (default is `get_on_off $DEFAULT_DO_PBUL`)"
     $ECHO ""
     $ECHO "    To disable a check, prefix option with 'no_' (eg. --no_lug)"
     $ECHO ""
@@ -297,6 +300,14 @@ while $TRUEPATH; do
             ;;
         --no_altfiles)
             DO_ALTFILES=
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
+        --pbul)
+            DO_PBUL=1
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
+        --no_pbul)
+            DO_PBUL=
             PASS_OPTIONS="$PASS_OPTIONS $1"
             ;;
         --*)
@@ -616,6 +627,7 @@ $ECHO "DO_ENV=[$DO_ENV]"
 $ECHO "DO_SERVICES=[$DO_SERVICES]"
 $ECHO "DO_CONFIG=[$DO_CONFIG]"
 $ECHO "DO_ALTFILES=[$DO_ALTFILES]"
+$ECHO "DO_PBUL=[$DO_PBUL]"
 pblank
 
 pline
@@ -1147,6 +1159,13 @@ if [ -n "$DO_ALTFILES" ]; then
         pfile_cond $homedir/.netrc
     done
 fi
+
+###########################################
+# Check for PBUL files ot gather if requested by customer
+if [ -n "$DO_PBUL" ]; then
+    for filename in /etc/pb.conf /etc/pb.settings /etc/pb.cfg /etc/pbulsolrupdate /etc/pb/*; do pfile_cond $filename; done
+fi
+
 ###########################################
 # Check for Processes
 if [ -n "$DO_PS" ]; then
