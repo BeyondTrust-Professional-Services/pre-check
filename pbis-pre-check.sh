@@ -12,7 +12,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.3.1
+script_version=1.4.0
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -1434,4 +1434,5 @@ exit 0
 # 1.2.10 - 2015/05/05 - Robert Auch - debian-version gathering for Squeeze
 # 1.3.0 - 2016/02/21 - Robert Auch - custom file gathering
 # 1.3.1 - 2016/04/15 - Ben Hendin - disabled ad_firewall by default.  Renamed output files to .srf (Server Readiness File)
+# 1.4.0 - 2016/07/10 - Robert Auch - PBUL data gathering
 
