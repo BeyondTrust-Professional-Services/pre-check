@@ -1,0 +1,3 @@
+AD-info.vbs - AD information gathering like DC versions, Forest versions, sites and subnets for PBIS, PBW, PBPS
+pbis-pre-check.sh - Unix information gathering for viewhealthstatus.py processing for PBIS and PBUL
+PBISPreCheck.zip - Zip file containing both above-mentioened utilities
