@@ -5,14 +5,14 @@
 # Anthony Ciarochi
 # November, 2007
 # (c) 2007-2010 Likewise Software
-# (c) 2011-2016 BeyondTrust Software
+# (c) 2011-2018 BeyondTrust Software
 #
 # Revisions at bottom
 
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.4.0
+script_version=1.5.0
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -34,9 +34,10 @@ DEFAULT_DO_SOFTWARE=1
 DEFAULT_DO_ENV=1
 DEFAULT_DO_SERVICES=
 DEFAULT_DO_CONFIG=1
-DEFAULT_DO_ALTFILES=1
+DEFAULT_DO_CACHE=1
+DEFAULT_DO_ALTFILES=
 DEFAULT_DO_PBUL=1
-ALTFILES="/srv/file/ksetdblogin.dat /prod/file/is/ksetdblogin.dat"
+ALTFILES=""
 ALTFILES_PASSFIELD=3
 ALTFILES_FIELDSEP=":"
 
@@ -57,6 +58,7 @@ DO_SOFTWARE=$DEFAULT_DO_SOFTWARE
 DO_ENV=$DEFAULT_DO_ENV
 DO_SERVICES=$DEFAULT_DO_SERVICES
 DO_CONFIG=$DEFAULT_DO_CONFIG
+DO_CACHE=$DEFAULT_DO_CACHE
 DO_ALTFILES=$DEFAULT_DO_ALTFILES
 DO_PBUL=$DEFAULT_DO_PBUL
 
@@ -134,6 +136,7 @@ usage()
     $ECHO "    --internet    - Do internet ping check (default is `get_on_off $DEFAULT_DO_INTERNET`)"
     $ECHO "    --services    - Do /etc/services output (default is `get_on_off $DEFAULT_DO_SERVICES`)"
     $ECHO "    --config      - Do /opt/{likewise|pbis}/{lw-config|config} --dump (default is `get_on_off $DEFAULT_DO_CONFIG`)"
+    $ECHO "    --cache       - Do /etc/nscd.conf (or similar) output  (default is `get_on_off $DEFAULT_DO_CACHE`)"
     $ECHO "    --altfiles    - Gather additional files from pre-defined array (default is `get_on_off $DEFAULT_DO_ALTFILES`)"
     $ECHO "    --pbul        - Gather PBUL files from no-prefix directory /etc/pb* (default is `get_on_off $DEFAULT_DO_PBUL`)"
     $ECHO ""
@@ -292,6 +295,14 @@ while $TRUEPATH; do
             ;;
         --no_config)
             DO_CONFIG=
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
+        --cache)
+            DO_CACHE=1
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
+        --no_cache)
+            DO_CACHE=
             PASS_OPTIONS="$PASS_OPTIONS $1"
             ;;
         --altfiles)
@@ -626,6 +637,7 @@ $ECHO "DO_SOFTWARE=[$DO_SOFTWARE]"
 $ECHO "DO_ENV=[$DO_ENV]"
 $ECHO "DO_SERVICES=[$DO_SERVICES]"
 $ECHO "DO_CONFIG=[$DO_CONFIG]"
+$ECHO "DO_CACHE=[$DO_CACHE]"
 $ECHO "DO_ALTFILES=[$DO_ALTFILES]"
 $ECHO "DO_PBUL=[$DO_PBUL]"
 pblank
@@ -954,6 +966,8 @@ show_in_path sudoers ${_SUDO_CONF_PATH}
 sudoers="${_show_in_path}"
 show_in_path smb.conf /etc/samba:/opt/samba/etc:/usr/local/etc:/etc:/usr/local/samba/etc:/usr/local/smb/etc:/opt/csw/etc
 smbconf="${_show_in_path}"
+show_in_path nscd.conf /etc:/etc/nscd:/usr/local/etc:/opt/csw/etc:/opt/etc:/etc/opt/
+nscdconf="${_show_in_path}"
 pblank
 
 ###########################################
@@ -1143,6 +1157,16 @@ if [ -n "$DO_CONFIG" ]; then
         LW_GETSTATUS="$ECHO ''"
     fi
     $LW_GETSTATUS
+fi
+
+
+###########################################
+# Cache Config file(s)
+if [ -n "$DO_CACHE" ]; then
+    for _file in ${nscdconf} ; do
+        lsfile $_file
+        pfile $_file
+    done
 fi
 
 ###########################################
@@ -1343,7 +1367,11 @@ pblank
 if [ "$OStype" = "solaris" ]; then
     if [ -x /usr/bin/zonename ]; then
         if [ `/usr/bin/zonename` = "global" ]; then
+            pline
+            $ECHO "//Global Zone Detection."
+            pblank
             #descend into child zones if able
+            zoneadm list
             for zone in `zoneadm list`; do
                 ZONEROOT=`zonecfg -z $zone info zonepath | awk '{ print $2 }'`
                 if [ $? -eq 0 ]; then
@@ -1435,4 +1463,4 @@ exit 0
 # 1.3.0 - 2016/02/21 - Robert Auch - custom file gathering
 # 1.3.1 - 2016/04/15 - Ben Hendin - disabled ad_firewall by default.  Renamed output files to .srf (Server Readiness File)
 # 1.4.0 - 2016/07/10 - Robert Auch - PBUL data gathering
-
+# 1.5.0 - 2018/02/17 - Robert Auch - gather nscd.conf, disable AD Domain requirement (for PBUL/PBPS usage)
