@@ -12,7 +12,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.5.0
+script_version=1.7.0
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -37,6 +37,7 @@ DEFAULT_DO_CONFIG=1
 DEFAULT_DO_CACHE=1
 DEFAULT_DO_ALTFILES=
 DEFAULT_DO_PBUL=1
+DEFAULT_DO_CRON=1
 ALTFILES=""
 ALTFILES_PASSFIELD=3
 ALTFILES_FIELDSEP=":"
@@ -61,6 +62,7 @@ DO_CONFIG=$DEFAULT_DO_CONFIG
 DO_CACHE=$DEFAULT_DO_CACHE
 DO_ALTFILES=$DEFAULT_DO_ALTFILES
 DO_PBUL=$DEFAULT_DO_PBUL
+DO_CRON=$DEFAULT_DO_CRON
 
 if [ -d /tmp ] ; then
     OUTFILE_DIR="/tmp"
@@ -139,6 +141,7 @@ usage()
     $ECHO "    --cache       - Do /etc/nscd.conf (or similar) output  (default is `get_on_off $DEFAULT_DO_CACHE`)"
     $ECHO "    --altfiles    - Gather additional files from pre-defined array (default is `get_on_off $DEFAULT_DO_ALTFILES`)"
     $ECHO "    --pbul        - Gather PBUL files from no-prefix directory /etc/pb* (default is `get_on_off $DEFAULT_DO_PBUL`)"
+    $ECHO "    --cron        - Gather crontab owners (accounts with cron jobs) (default is `get_on_off $DEFAULT_DO_CRON`)"
     $ECHO ""
     $ECHO "    To disable a check, prefix option with 'no_' (eg. --no_lug)"
     $ECHO ""
@@ -321,6 +324,14 @@ while $TRUEPATH; do
             DO_PBUL=
             PASS_OPTIONS="$PASS_OPTIONS $1"
             ;;
+        --cron)
+            DO_CRON=1
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
+        --no_cron)
+            DO_CRON=
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
         --*)
             $ECHO "Unsupported option: $1"
             exit 1
@@ -439,6 +450,9 @@ check_port()
 
 grab_adplugin_userinfo()
 {
+    if [ "x$ADdom" = "x" ]; then
+        return 0
+    fi
     if [ "$OStype" = "darwin" ]; then
         echo "Attempting to grab user information stored in the $ADdom/Users container"
         for i in `dscl "/Active Directory/$ADdom" -list /Users`;
@@ -567,22 +581,16 @@ show_in_path()
 }
 
 if [ -z "$ADdom" ]; then
-    ###########################################
-    # Query the user for required info
-    pline
-    $ECHO "// What is the fully qualified name of the "
-    $ECHO "// Active Directory domain you want to join this system to:  "
-    $ECHO "// (This is just a test; no attempt to join the domain will be made)"
-    read ADdom
-    pblank
-fi
-
-if [ -z "$ADdom" ]; then
     $ECHO "ERROR: Missing AD domain argument"
-    exit 1
+    $ECHO "Will not perform AD tests."
+    DO_AD=""
+    #disable AD checks if no AD domain
 fi
 
 case "$ADdom" in
+    "")
+        # this is ok because it's blank
+        ;;
     *.)
         $ECHO "Domain name name should not end with a dot"
         exit 1
@@ -640,6 +648,7 @@ $ECHO "DO_CONFIG=[$DO_CONFIG]"
 $ECHO "DO_CACHE=[$DO_CACHE]"
 $ECHO "DO_ALTFILES=[$DO_ALTFILES]"
 $ECHO "DO_PBUL=[$DO_PBUL]"
+$ECHO "DO_CRON=[$DO_CRON]"
 pblank
 
 pline
@@ -1191,6 +1200,16 @@ if [ -n "$DO_PBUL" ]; then
 fi
 
 ###########################################
+# Check for crontabs owned by accounts if requested
+
+if [ -n "$DO_CRON" ]; then
+    for crondir in /var/spool/cron/crontabs /var/spool/cron/atjobs /var/spool/cron/crontab /var/spool/cron; do
+        if [ -d "$crondir" ]; then
+            lsfile "$crondir"
+        fi
+    done
+fi
+###########################################
 # Check for Processes
 if [ -n "$DO_PS" ]; then
     pline
@@ -1464,3 +1483,4 @@ exit 0
 # 1.3.1 - 2016/04/15 - Ben Hendin - disabled ad_firewall by default.  Renamed output files to .srf (Server Readiness File)
 # 1.4.0 - 2016/07/10 - Robert Auch - PBUL data gathering
 # 1.5.0 - 2018/02/17 - Robert Auch - gather nscd.conf, disable AD Domain requirement (for PBUL/PBPS usage)
+# 1.6.0 - 2018/03/20 - Robert Auch - add crontab output gathering for service account parsing
