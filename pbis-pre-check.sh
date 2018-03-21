@@ -369,7 +369,7 @@ pfile_pass()
 {
     pline
     $ECHO "//Contents of $1:"
-    $awk -F: '{print $1 ":x:" $3 ":" $4 ":" $5 ":" $6 ":" $7}' $1 | grep -vi "password =" 2>&1
+    $AWK -F: '{print $1 ":x:" $3 ":" $4 ":" $5 ":" $6 ":" $7}' $1 | grep -vi "password =" 2>&1
     pblank
 }
 pfile()
@@ -390,7 +390,7 @@ pfile_alt()
 {
     if [ -f "$1" ]; then
         $ECHO "//Contents of AltFile $1:"
-        $awk -F$ALTFILES_FIELDSEP 'BEGIN{OFS="'$ALTFILES_FIELDSEP'"}; $'$ALTFILES_PASSFIELD'="x" { print }' $1 2>&1
+        $AWK -F$ALTFILES_FIELDSEP 'BEGIN{OFS="'$ALTFILES_FIELDSEP'"}; $'$ALTFILES_PASSFIELD'="x" { print }' $1 2>&1
         pblank
     fi
 }
@@ -401,6 +401,20 @@ pfile_nc()
     $ECHO "// Contents of $1 (comments removed):"
     cat "$1" 2>&1 | egrep -v '^#'
     pblank
+}
+
+lsdir()
+{
+    pline
+    $ECHO "// Listing of $1:"
+    ls -la "$1"
+    pblank
+    if [ -h "$1" ]; then
+        pline
+        $ECHO "// Listing of $1 (through symlink):"
+        ls -laL "$1"
+        pblank
+    fi
 }
 
 lsfile()
@@ -477,7 +491,7 @@ grab_localplugin_userinfo()
 {
     if [ "$OStype" = "darwin" ]; then
         for i in `dscl "/Local/Default" -list /Users | egrep -v "_|daemon|nobody"`;
-        do echo `dscl "/Local/Default" -read /Users/$i RecordName | sed 's/RecordName: //g'`:*:`dscl "/Local/Default" -read /Users/$i UniqueID | sed 's/UniqueID: //g'`:`dscl "/Local/Default" -read /Users/$i PrimaryGroupID | sed 's/PrimaryGroupID: //g'`:`dscl "/Local/Default" -read /Users/$i RealName | sed -e 's/RealName://g' -e 's/^ //g' | awk '{printf("%s", $0 (NR==1 ? "" : ""))}'`:/Users/$i:`dscl "/Local/Default" -read /Users/$i UserShell | sed 's/UserShell: //g'`
+        do echo `dscl "/Local/Default" -read /Users/$i RecordName | sed 's/RecordName: //g'`:*:`dscl "/Local/Default" -read /Users/$i UniqueID | sed 's/UniqueID: //g'`:`dscl "/Local/Default" -read /Users/$i PrimaryGroupID | sed 's/PrimaryGroupID: //g'`:`dscl "/Local/Default" -read /Users/$i RealName | sed -e 's/RealName://g' -e 's/^ //g' | $AWK '{printf("%s", $0 (NR==1 ? "" : ""))}'`:/Users/$i:`dscl "/Local/Default" -read /Users/$i UserShell | sed 's/UserShell: //g'`
         done
     fi
 }
@@ -672,9 +686,12 @@ else
 fi
 
 if [ "$OStype" = "solaris" ]; then
-    awk="nawk"
+    AWK="nawk"
+    if [ -x "/usr/xpg4/bin/awk" ]; then
+        AWK=/usr/xpg4/bin/awk
+    fi
 else
-    awk="awk"
+    AWK="awk"
 fi
 
 if [ $OStype = "aix" ]; then
@@ -835,7 +852,7 @@ pline
 case "$OStype" in
     solaris|aix|hpux|darwin|freebsd)
         $ECHO "// Network Interfaces via netstat:"
-        netstat -in | egrep -v 'Name|\*|\:' | awk '{ print $1,$4 }'
+        netstat -in | egrep -v 'Name|\*|\:' | $AWK '{ print $1,$4 }'
         ;;
     *)
         $ECHO "// Network Interfaces via ifconfig:"
@@ -851,7 +868,7 @@ pblank
 
 pline
 $ECHO "// Attempting to ping default router: "
-GW=`netstat -nr | egrep 'default|UG ' | awk '{ print $2 }'`
+GW=`netstat -nr | egrep 'default|UG ' | $AWK '{ print $2 }'`
 if [ -n "$GW" ]; then
     xping $GW
 else
@@ -885,7 +902,7 @@ pblank
 
 pline
 $ECHO "// FQDN and IP from DNS:"
-fqdn=`nslookup $host | grep Name: | awk '{ print $2 }'`
+fqdn=`nslookup $host | grep Name: | $AWK '{ print $2 }'`
 ip=`nslookup $host | $AWK 'BEGIN{ getline; getline }; /Address:/ { print $2; }'`
 $ECHO "FQDN:\t\t $fqdn"
 $ECHO "IP address:\t $ip"
@@ -913,7 +930,7 @@ case "$OStype" in
         apt-cache showpkg sudo openssl bash rpm ssh perl | egrep -A2 "Package:"
         ;;
     solaris)
-        pkginfo | awk ' { print $2 } ' | egrep 'sudo|ssh|^SUNWbash$|^SUNWopensslr$|SUNWperl5' | xargs -n1 -iQ sh -c "echo Q ; pkginfo -l Q | egrep 'NAME|VERSION|PKGINST'"
+        pkginfo | $AWK ' { print $2 } ' | egrep 'sudo|ssh|^SUNWbash$|^SUNWopensslr$|SUNWperl5' | xargs -n1 -iQ sh -c "echo Q ; pkginfo -l Q | egrep 'NAME|VERSION|PKGINST'"
         ssh -V 2>&1
         ;;
     aix)
@@ -991,11 +1008,11 @@ case "$OStype" in
         swlist -l product '*,c=patch' | egrep 'PHCO_31923|PHCO_35743|PHKL_34805|PHSS_36004'
         ;;
     darwin)
-        if [ `uname -v | awk '{ print $4 }' | cut -d'.' -f1` = '8' ]
+        if [ `uname -v | $AWK '{ print $4 }' | cut -d'.' -f1` = '8' ]
         then
             ls -d /Library/Receipts/Sec*
             ls -d /Library/Receipts/MacOS*
-        elif [ `uname -v | awk '{ print $4 }' | cut -d'.' -f1` = '9' ]
+        elif [ `uname -v | $AWK '{ print $4 }' | cut -d'.' -f1` = '9' ]
         then
             ls /Library/Receipts/boms/com.apple.pkg.update.*
         fi
@@ -1205,7 +1222,11 @@ fi
 if [ -n "$DO_CRON" ]; then
     for crondir in /var/spool/cron/crontabs /var/spool/cron/atjobs /var/spool/cron/crontab /var/spool/cron; do
         if [ -d "$crondir" ]; then
-            lsfile "$crondir"
+            lsdir "${crondir}"
+        else
+            if [ -r "$crondir" ]; then
+                lsfile "${crondir}"
+            fi
         fi
     done
 fi
@@ -1265,11 +1286,11 @@ if [ -n "$DO_SOFTWARE" ]; then
             swlist -l product '*,c=patch'
             ;;
         darwin)
-            if [ `uname -v | awk '{ print $4 }' | cut -d'.' -f1` = '8' ]
+            if [ `uname -v | $AWK '{ print $4 }' | cut -d'.' -f1` = '8' ]
             then
                 ls -d /Library/Receipts/Sec*
                 ls -d /Library/Receipts/MacOS*
-            elif [ `uname -v | awk '{ print $4 }' | cut -d'.' -f1` = '9' ]
+            elif [ `uname -v | $AWK '{ print $4 }' | cut -d'.' -f1` = '9' ]
             then
                 ls /Library/Receipts/boms/com.apple.pkg.update.*
             fi
@@ -1392,7 +1413,7 @@ if [ "$OStype" = "solaris" ]; then
             #descend into child zones if able
             zoneadm list
             for zone in `zoneadm list`; do
-                ZONEROOT=`zonecfg -z $zone info zonepath | awk '{ print $2 }'`
+                ZONEROOT=`zonecfg -z $zone info zonepath | $AWK '{ print $2 }'`
                 if [ $? -eq 0 ]; then
                     cp $0 $ZONEROOT/root/tmp/
                     if [ $? -ne 0 ]; then
@@ -1484,3 +1505,4 @@ exit 0
 # 1.4.0 - 2016/07/10 - Robert Auch - PBUL data gathering
 # 1.5.0 - 2018/02/17 - Robert Auch - gather nscd.conf, disable AD Domain requirement (for PBUL/PBPS usage)
 # 1.6.0 - 2018/03/20 - Robert Auch - add crontab output gathering for service account parsing
+# 1.6.1 - 2018/03/20 - Robert Auch - fix awk/AWK parameterization to solve solaris issues
