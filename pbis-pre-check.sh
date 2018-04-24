@@ -12,7 +12,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.7.0
+script_version=1.7.1
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -1505,4 +1505,4 @@ exit 0
 # 1.4.0 - 2016/07/10 - Robert Auch - PBUL data gathering
 # 1.5.0 - 2018/02/17 - Robert Auch - gather nscd.conf, disable AD Domain requirement (for PBUL/PBPS usage)
 # 1.6.0 - 2018/03/20 - Robert Auch - add crontab output gathering for service account parsing
-# 1.6.1 - 2018/03/20 - Robert Auch - fix awk/AWK parameterization to solve solaris issues
+# 1.7.1 - 2018/03/20 - Robert Auch - fix awk/AWK parameterization to solve solaris issues
