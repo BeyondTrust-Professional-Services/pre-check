@@ -12,7 +12,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.7.1
+script_version=1.7.2
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -465,12 +465,13 @@ check_port()
 grab_adplugin_userinfo()
 {
     if [ "x$ADdom" = "x" ]; then
+        $ECHO "No AD domain, not doing anything."
         return 0
     fi
     if [ "$OStype" = "darwin" ]; then
         echo "Attempting to grab user information stored in the $ADdom/Users container"
-        for i in `dscl "/Active Directory/$ADdom" -list /Users`;
-        do dscl "/Active Directory/$ADdom" -read /Users/$i sAMAccountName userPrincipalName NFSHomeDirectory UniqueID PrimaryGroupID SMBSID SMBPrimaryGroupSID UserShell;
+        for i in `dscl "/Active Directory/$ADdom/All Domains" -list /Users`;
+        do dscl "/Active Directory/$ADdom/All Domains" -read /Users/$i sAMAccountName userPrincipalName NFSHomeDirectory UniqueID PrimaryGroupID SMBSID SMBPrimaryGroupSID UserShell;
             pblank;
         done
     fi
@@ -478,6 +479,10 @@ grab_adplugin_userinfo()
 
 grab_adplugin_alldomains_userinfo()
 {
+    if [ "x$ADdom" = "x" ]; then
+        $ECHO "No AD domain, not doing anything."
+        return 0
+    fi
     if [ "$OStype" = "darwin" ]; then
         echo "Attempting to grab user information stored in the All Domains/Users container"
         for i in `dscl "/Active Directory/All Domains" -list /Users`;
@@ -490,7 +495,7 @@ grab_adplugin_alldomains_userinfo()
 grab_localplugin_userinfo()
 {
     if [ "$OStype" = "darwin" ]; then
-        for i in `dscl "/Local/Default" -list /Users | egrep -v "_|daemon|nobody"`;
+        for i in `dscl "/Local/Default" -list /Users | egrep -v "^_|daemon|nobody"`;
         do echo `dscl "/Local/Default" -read /Users/$i RecordName | sed 's/RecordName: //g'`:*:`dscl "/Local/Default" -read /Users/$i UniqueID | sed 's/UniqueID: //g'`:`dscl "/Local/Default" -read /Users/$i PrimaryGroupID | sed 's/PrimaryGroupID: //g'`:`dscl "/Local/Default" -read /Users/$i RealName | sed -e 's/RealName://g' -e 's/^ //g' | $AWK '{printf("%s", $0 (NR==1 ? "" : ""))}'`:/Users/$i:`dscl "/Local/Default" -read /Users/$i UserShell | sed 's/UserShell: //g'`
         done
     fi
@@ -1506,3 +1511,4 @@ exit 0
 # 1.5.0 - 2018/02/17 - Robert Auch - gather nscd.conf, disable AD Domain requirement (for PBUL/PBPS usage)
 # 1.6.0 - 2018/03/20 - Robert Auch - add crontab output gathering for service account parsing
 # 1.7.1 - 2018/03/20 - Robert Auch - fix awk/AWK parameterization to solve solaris issues
+# 1.7.2 - 2018/09/10 - Robert Auch - Mac dscl commands had wrong paths for Sierra / later, fixed so users are grabbed properly
