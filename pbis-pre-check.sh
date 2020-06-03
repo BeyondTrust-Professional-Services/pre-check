@@ -12,7 +12,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.7.2
+script_version=1.8.0
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -38,6 +38,7 @@ DEFAULT_DO_CACHE=1
 DEFAULT_DO_ALTFILES=
 DEFAULT_DO_PBUL=1
 DEFAULT_DO_CRON=1
+DEFAULT_DO_NETUSERS=1
 ALTFILES=""
 ALTFILES_PASSFIELD=3
 ALTFILES_FIELDSEP=":"
@@ -45,6 +46,7 @@ ALTFILES_FIELDSEP=":"
 DO_LOG=1
 DO_DF=$DEFAULT_DO_DF
 DO_LUG=$DEFAULT_DO_LUG
+DO_NETUSERS=$DEFAULT_DO_NETUSERS
 DO_SECURITY=$DEFAULT_DO_SECURITY
 DO_FIND=$DEFAULT_DO_FIND
 DO_SUDOERS=$DEFAULT_DO_SUDOERS
@@ -126,6 +128,7 @@ usage()
     $ECHO ""
     $ECHO "    --df          - Do disk space check (default is `get_on_off $DEFAULT_DO_DF`)"
     $ECHO "    --lug         - Do local users and groups check (default is `get_on_off $DEFAULT_DO_LUG`)"
+    $ECHO "    --netusers    - Do network users and groups check (default is `get_on_off $DEFAULT_DO_NETUSERS`)"
     $ECHO "    --security    - Do file checks for security-managing files (default is `get_on_off $DEFAULT_DO_SECURITY`)"
     $ECHO "    --find        - Do find files check (default is `get_on_off $DEFAULT_DO_FIND`)"
     $ECHO "    --sudoers     - Do 'cat /etc/sudoers' (default is `get_on_off $DEFAULT_DO_SUDOERS`)"
@@ -186,6 +189,14 @@ while $TRUEPATH; do
             ;;
         --no_lug)
             DO_LUG=
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
+        --netusers)
+            DO_NETUSERS=1
+            PASS_OPTIONS="$PASS_OPTIONS $1"
+            ;;
+        --no_netusers)
+            DO_NETUSERS=
             PASS_OPTIONS="$PASS_OPTIONS $1"
             ;;
         --security)
@@ -651,6 +662,7 @@ pline
 $ECHO "// Options:"
 $ECHO "DO_DF=[$DO_DF]"
 $ECHO "DO_LUG=[$DO_LUG]"
+$ECHO "DO_NETUSERS=[$DO_NETUSERS]"
 $ECHO "DO_FIND=[$DO_FIND]"
 $ECHO "DO_SUDOERS=[$DO_SUDOERS]"
 $ECHO "DO_PS=[$DO_PS]"
@@ -913,8 +925,10 @@ $ECHO "FQDN:\t\t $fqdn"
 $ECHO "IP address:\t $ip"
 pblank
 
+PERL="/usr/bin/perl"
 if [ -x `which perl` ]; then
     pline
+    PERL=`which perl`
     $ECHO "// FQDN from gethostbyname:"
     `which perl` -e '($name)=gethostbyname($ARGV[0]);print "$name\n";' "$host"
     pblank
@@ -1098,6 +1112,93 @@ if [ -n "$DO_LUG" ]; then
     else
         pfile_pass /etc/passwd
         pfile /etc/group
+    fi
+fi
+
+###########################################
+# Check for network users
+if [ -n "$DO_NETUSERS" ]; then
+    pblank
+    pline
+    $ECHO "//Looking for Domain Accounts:"
+    pblank
+    pline
+    $ECHO "// Centrify Configuration:"
+    adinfo=`command -v adinfo`
+    if [ $? -eq 0 ]; then
+        pline
+        pblank
+        adinfo
+        pblank
+        pline
+        $ECHO "// Network Users:"
+        pblank
+        adquery -fu
+        pblank
+        pline
+        $ECHO "// Network Groups:"
+        pblank
+        adquery -fg
+        pblank
+        pline
+    fi
+    pblank
+    pline
+    $ECHO "// VAS Configuration:"
+    vasstatus=`/opt/quest/bin/vastool info domain`
+    if [ $? -eq 0 ]; then
+        $ECHO $vasstatus
+        pblank
+        pline
+        $ECHO "// Network Users:"
+        /opt/quest/bin/vastool list -fo users
+        pblank
+        pline
+        $ECHO "// Network Groups:"
+        /opt/quest/bin/vastool list -fo groups
+        pblank
+        pline
+    fi
+    pblank
+    pline
+    $ECHO "// Winbind Configuration:"
+    wbinfo=`command -v wbinfo`
+    if [ $? -eq 0 ]; then
+        wbinfo
+        pblank
+        pline
+        $ECHO "// Domain Users:"
+        wbinfo -u
+        pblank
+        pline
+        $ECHO "// Network Users:"
+        ${PERL} -e 'while (1) { ($na,$pa,$ui,$gi,$qu,$co,$ge,$di,$sh,$ex) = getpwent(); exit if ($na=~/^$/); print join(":",$na,x,$ui,$gi,$ge,$di,$sh)."\n";}'
+        pblank
+        pline
+        $ECHO "// Domain Groups:"
+        wbinfo -g
+        pblank
+        pline
+        $ECHO "// Network Groups:"
+        ${PERL} -e 'while (1) {$line= join(":", getgrent())."\n"; exit if ($line=~/^$/); print $line;}' 
+        pblank
+        pline
+    fi
+    pblank
+    pline
+    $ECHO "// SSSD Configuration:"
+    realm=`command -v realm`
+    if [ $? -eq 0 ]; then
+        $realm list
+        awk '/^[[:space:]]*domains/ { print $NF }' /etc/sssd/sssd.conf
+        pblank
+        pline
+        $ECHO "// Network Users:"
+        ${PERL} -e 'while (1) { ($na,$pa,$ui,$gi,$qu,$co,$ge,$di,$sh,$ex) = getpwent(); exit if ($na=~/^$/); print join(":",$na,x,$ui,$gi,$ge,$di,$sh)."\n";}'
+        pblank
+        pline
+        $ECHO "// Network Groups:"
+        ${PERL} -e 'while (1) {$line= join(":", getgrent())."\n"; exit if ($line=~/^$/); print $line;}' 
     fi
 fi
 
@@ -1512,3 +1613,4 @@ exit 0
 # 1.6.0 - 2018/03/20 - Robert Auch - add crontab output gathering for service account parsing
 # 1.7.1 - 2018/03/20 - Robert Auch - fix awk/AWK parameterization to solve solaris issues
 # 1.7.2 - 2018/09/10 - Robert Auch - Mac dscl commands had wrong paths for Sierra / later, fixed so users are grabbed properly
+# 1.8.0 - 2020/06/03 - Robert Auch - dump all network users and domain configs by default
