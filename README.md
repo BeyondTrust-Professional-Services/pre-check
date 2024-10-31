@@ -111,38 +111,39 @@ console output to be captured using the following:
 | End Time                                                     | All                                                      | Used by analysis tool to know a particular server’s output was fully completed                                                                                                                                                                                                                                                                                                                                | False                                                                                                                    | All hosts will fail as incomplete                                                                                                                                                                                       |
 | Zones                                                        | All                                                      | Used to descend into Solaris 10 and 11 Zones to re-run the script and gather 100% output on each child zone                                                                                                                                                                                                                                                                                                   | False                                                                                                                    | Customer must manually run the script on each child zone independently                                                                                                                                                  |
 
-##Active Directory Information
 
-###Active Directory Map
+#Active Directory Information
+
+##Active Directory Map
 
 Multi-tree forests create additional requirements for Single-Sign-On and DNS setup to properly enumerate from UNIX hosts.  Additionally, the Schema Master in a multi-forest setup may not be in the same domain as the Cell will be created.
 
-###Forest Info
+##Forest Info
 
 PBIS Directory Integrated Mode only works on forests at Windows 2003 Forest Level or higher.
 
-###RFC2307 Attributes
+##RFC2307 Attributes
 
 Determines the work required to move to Directory Integrated Mode, or discover issues before running the DI wizard.
 
-###Domain List
+##Domain List
 
 List all domains and their NT4 and FQDN names. Used for Disjointed DNS discovery or DNS/NT4 name mismatches.
 
-###Trust List
+##Trust List
 
 One-way trusts are only supported by PBIS Named Cells. Non-transitive two-way trusts can create troubleshooting difficulties with the PBIS Default Cell.
 
-###PBIS Cells
+##PBIS Cells
 
 List of existing PBIS Cells, used to identify servers to identity maps.
 If no cell is found, but Likewise Open clients exist, care must be taken to not break those clients when creating the cell (Likewise Open can operate in Cell mode, but PBIS Open cannot).
 
-###Active Directory Sites and Subnets
+##Active Directory Sites and Subnets
 
 Map Unix system IP addresses to the Active Directory Site they will be joined to.
 
-###DCs by Site
+##DCs by Site
 
 Helps PBIS team determine if any sites might need more Domain Controller / Global Catalog coverage when UNIX systems are joined to  their default sites.
 
