@@ -12,7 +12,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.8.0
+script_version=1.9.1
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -873,7 +873,7 @@ case "$OStype" in
         ;;
     *)
         $ECHO "// Network Interfaces via ifconfig:"
-        ifconfig | egrep 'inet addr|Link' | grep -v inet6
+        ip addr | egrep 'inet |Link' | grep -v inet6
         ;;
 esac
 pblank
@@ -1614,3 +1614,4 @@ exit 0
 # 1.7.1 - 2018/03/20 - Robert Auch - fix awk/AWK parameterization to solve solaris issues
 # 1.7.2 - 2018/09/10 - Robert Auch - Mac dscl commands had wrong paths for Sierra / later, fixed so users are grabbed properly
 # 1.8.0 - 2020/06/03 - Robert Auch - dump all network users and domain configs by default
+# 1.9.1 - 2024/11/07 - Robert Auch - replace ifconfig with ip addr for Linux.
