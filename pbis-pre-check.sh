@@ -6,13 +6,14 @@
 # November, 2007
 # (c) 2007-2010 Likewise Software
 # (c) 2011-2018 BeyondTrust Software
+# (c) 2018-2024 BeyondTrust Corporation
 #
 # Revisions at bottom
 
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.8.0
+script_version=1.9.0
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -1371,10 +1372,34 @@ fi
 ###########################################
 # NTP info
 if [ -n "$DO_NTP" ]; then
-    pline
-    $ECHO "// NTP Info:"
-    ntpq -pn
-    pblank
+    timecmd=`command -v ntpq`
+    if [ $? -eq 0 ]; then
+        pline
+        $ECHO "// NTP Info:"
+        $timecmd  -pn
+        pblank
+    fi
+    timecmd=`command -v chronyc`
+    if [ $? -eq 0 ]; then
+        pline
+        $ECHO "// chronyc info:"
+        $timecmd sources
+        pblank
+    fi
+    timecmd=`command -v vmware-toolbox-cmd`
+    if [ $? -eq 0 ]; then
+        pline
+        $ECHO "// vmware-toolbox-cmd info:"
+        $timecmd timesync status
+        pblank
+    fi
+    timecmd=`command -v timedatectl`
+    if [ $? -eq 0 ]; then
+        pline
+        $ECHO "// timedatectl Info:"
+        $timecmd status
+        pblank
+    fi
 fi
 
 ###########################################
@@ -1614,3 +1639,4 @@ exit 0
 # 1.7.1 - 2018/03/20 - Robert Auch - fix awk/AWK parameterization to solve solaris issues
 # 1.7.2 - 2018/09/10 - Robert Auch - Mac dscl commands had wrong paths for Sierra / later, fixed so users are grabbed properly
 # 1.8.0 - 2020/06/03 - Robert Auch - dump all network users and domain configs by default
+# 1.9.0 - 2024/10/29 - Robert Auch - sync version with AD-info.vbs for release and publication.  Add additional time sources
