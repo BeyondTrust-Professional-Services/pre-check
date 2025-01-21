@@ -718,6 +718,15 @@ if [ $OStype = "aix" ]; then
 elif [ $OStype = "hpux" ]; then
     platform=`getconf _SC_CPU_VERSION`
     # From /usr/include/unistd.h
+    #  define CPU_HP_MC68020        0x20C /* Motorola MC68020 */
+    #  define CPU_HP_MC68030        0x20D /* Motorola MC68030 */
+    #  define CPU_HP_MC68040        0x20E /* Motorola MC68040 */
+    #  define CPU_PA_RISC1_0        0x20B /* HP PA-RISC1.0 */
+    #  define CPU_PA_RISC1_1        0x210 /* HP PA-RISC1.1 */
+    #  define CPU_PA_RISC1_2        0x211 /* HP PA-RISC1.2 */
+    #  define CPU_PA_RISC2_0        0x214 /* HP PA-RISC2.0 */
+    #  define CPU_PA_RISC_MAX       0x2FF /* Maximum value for HP PA-RISC systems */
+    #  define CPU_IA64_ARCHREV_0    0x300 /* IA-64 archrev 0 */
     case "$platform" in
         524)
             platform=mc68020
@@ -725,7 +734,7 @@ elif [ $OStype = "hpux" ]; then
         525)
             platform=mc68030
             ;;
-        525)
+        526)
             platform=mc68040
             ;;
         523)
