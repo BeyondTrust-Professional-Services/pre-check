@@ -13,7 +13,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.9.1
+script_version=1.9.2
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -623,15 +623,15 @@ case "$ADdom" in
         # this is ok because it's blank
         ;;
     *.)
-        $ECHO "Domain name name should not end with a dot"
+        $ECHO "Domain DNS name should not end with a dot"
         exit 1
         ;;
     .*)
-        $ECHO "Domain name name should not start with a dot"
+        $ECHO "Domain DNS name should not start with a dot"
         exit 1
         ;;
     *..*)
-        $ECHO "Domain name has two or more dots in a row"
+        $ECHO "Domain DNS name has two or more dots in a row"
         exit 1
         ;;
     *.*)
@@ -1641,3 +1641,4 @@ exit 0
 # 1.8.0 - 2020/06/03 - Robert Auch - dump all network users and domain configs by default
 # 1.9.0 - 2024/10/29 - Robert Auch - sync version with AD-info.vbs for release and publication.  Add additional time sources
 # 1.9.1 - 2024/11/07 - Robert Auch - replace ifconfig with ip addr for Linux. Allow IPv6
+# 1.9.2 - 2025/01/21 - Robert Auch - typos in print statements, mis-calculation of PA-RISC version
