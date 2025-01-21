@@ -1138,7 +1138,7 @@ if [ -n "$DO_NETUSERS" ]; then
     if [ $? -eq 0 ]; then
         pline
         pblank
-        adinfo
+        $adinfo
         pblank
         pline
         $ECHO "// Network Users:"
@@ -1174,7 +1174,7 @@ if [ -n "$DO_NETUSERS" ]; then
     $ECHO "// Winbind Configuration:"
     wbinfo=`command -v wbinfo`
     if [ $? -eq 0 ]; then
-        wbinfo
+        $wbinfo
         pblank
         pline
         $ECHO "// Domain Users:"
