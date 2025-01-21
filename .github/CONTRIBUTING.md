@@ -26,6 +26,8 @@ Feature requests should also be submitted through your Implementation Manager.
 
 ### Making Changes and Submitting a Pull Request
 
+All tools in this repository are written to support the largest number of OSes and versions reasonable. This means all `.sh` scripts are Bourne Shell, not bash. Please review the [Bash man page](https://www.etalabs.net/sh_tricks.html), the [Bashism Wiki](https://mywiki.wooledge.org/Bashism) and [Rich's Sh Tricks](https://www.etalabs.net/sh_tricks.html) for references on handling bashisms that are illegal in POSIX `sh`.
+
 #### **Did you write a patch that fixes a bug?**
 
 - Open a GitHub pull request with the patch.
