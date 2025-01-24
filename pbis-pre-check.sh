@@ -13,7 +13,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.9.1
+script_version=1.9.2
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -623,15 +623,15 @@ case "$ADdom" in
         # this is ok because it's blank
         ;;
     *.)
-        $ECHO "Domain name name should not end with a dot"
+        $ECHO "Domain DNS name should not end with a dot"
         exit 1
         ;;
     .*)
-        $ECHO "Domain name name should not start with a dot"
+        $ECHO "Domain DNS name should not start with a dot"
         exit 1
         ;;
     *..*)
-        $ECHO "Domain name has two or more dots in a row"
+        $ECHO "Domain DNS name has two or more dots in a row"
         exit 1
         ;;
     *.*)
@@ -718,6 +718,15 @@ if [ $OStype = "aix" ]; then
 elif [ $OStype = "hpux" ]; then
     platform=`getconf _SC_CPU_VERSION`
     # From /usr/include/unistd.h
+    #  define CPU_HP_MC68020        0x20C /* Motorola MC68020 */
+    #  define CPU_HP_MC68030        0x20D /* Motorola MC68030 */
+    #  define CPU_HP_MC68040        0x20E /* Motorola MC68040 */
+    #  define CPU_PA_RISC1_0        0x20B /* HP PA-RISC1.0 */
+    #  define CPU_PA_RISC1_1        0x210 /* HP PA-RISC1.1 */
+    #  define CPU_PA_RISC1_2        0x211 /* HP PA-RISC1.2 */
+    #  define CPU_PA_RISC2_0        0x214 /* HP PA-RISC2.0 */
+    #  define CPU_PA_RISC_MAX       0x2FF /* Maximum value for HP PA-RISC systems */
+    #  define CPU_IA64_ARCHREV_0    0x300 /* IA-64 archrev 0 */
     case "$platform" in
         524)
             platform=mc68020
@@ -725,7 +734,7 @@ elif [ $OStype = "hpux" ]; then
         525)
             platform=mc68030
             ;;
-        525)
+        526)
             platform=mc68040
             ;;
         523)
@@ -1129,7 +1138,7 @@ if [ -n "$DO_NETUSERS" ]; then
     if [ $? -eq 0 ]; then
         pline
         pblank
-        adinfo
+        $adinfo
         pblank
         pline
         $ECHO "// Network Users:"
@@ -1165,7 +1174,7 @@ if [ -n "$DO_NETUSERS" ]; then
     $ECHO "// Winbind Configuration:"
     wbinfo=`command -v wbinfo`
     if [ $? -eq 0 ]; then
-        wbinfo
+        $wbinfo
         pblank
         pline
         $ECHO "// Domain Users:"
@@ -1641,3 +1650,4 @@ exit 0
 # 1.8.0 - 2020/06/03 - Robert Auch - dump all network users and domain configs by default
 # 1.9.0 - 2024/10/29 - Robert Auch - sync version with AD-info.vbs for release and publication.  Add additional time sources
 # 1.9.1 - 2024/11/07 - Robert Auch - replace ifconfig with ip addr for Linux. Allow IPv6
+# 1.9.2 - 2025/01/21 - Robert Auch - typos in print statements, mis-calculation of PA-RISC version
