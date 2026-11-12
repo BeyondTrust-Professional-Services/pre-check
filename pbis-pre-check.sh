@@ -13,7 +13,7 @@
 # TODO: Add DNS/tcp check against nameserver(s).  This can detect DDNS
 # update issues when UDP is sufficient for DNS lookups (small AD domain).
 
-script_version=1.9.2
+script_version=1.9.3
 
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ECHO=echo
@@ -1143,12 +1143,12 @@ if [ -n "$DO_NETUSERS" ]; then
         pline
         $ECHO "// Network Users:"
         pblank
-        adquery -fu
+        adquery user -fu
         pblank
         pline
         $ECHO "// Network Groups:"
         pblank
-        adquery -fg
+        adquery group -fg
         pblank
         pline
     fi
@@ -1651,3 +1651,4 @@ exit 0
 # 1.9.0 - 2024/10/29 - Robert Auch - sync version with AD-info.vbs for release and publication.  Add additional time sources
 # 1.9.1 - 2024/11/07 - Robert Auch - replace ifconfig with ip addr for Linux. Allow IPv6
 # 1.9.2 - 2025/01/21 - Robert Auch - typos in print statements, mis-calculation of PA-RISC version
+# 1.9.3 - 2026/02/18 - Robert Auch - typo in adquery commands missing "user/group" syntax
